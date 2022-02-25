@@ -1,4 +1,4 @@
-let jstool = (() => {
+var jstool = (function() {
     /**
      * 숫자 천단위 콤마처리 함수
      * @param {number} number 콤마 추가할 숫자
@@ -103,28 +103,37 @@ let jstool = (() => {
     }
 
     /**
-     * 값이 전화형식인지 확인
-     * @param {string} tel 체크할 문자열
-     * @returns {boolean} 전화번호형식 여부
-     */
-    function isTel(tel) {
-        return /(\d{3}).*(\d{3,4}).*(\d{4})/.test(tel);
-    }
-
-    /**
      * 브라우저가 InternetExplorer인지 확인
-     * @returns {boolean} InternetExplorer 여부
+     * @returns {*} InternetExplorer 버전
      */
      function isIE() {
-        let agent = navigator.userAgent.toLowerCase();
+        var agent = navigator.userAgent.toLowerCase();
         if (
             (
                 navigator.appName == 'Netscape'
                 && agent.indexOf('trident') != -1
             )
             || (agent.indexOf('msie') != -1)
+            || (agent.indexOf('edg/') != -1)
+            || (agent.indexOf('edge/') != -1)
         ) {
-            return true;
+            var version = true;
+            var word = '';
+            if (navigator.appName == "Microsoft Internet Explorer") {
+                word = "msie ";
+            } else if (agent.search("trident") != -1) {
+                word = "trident/.*rv:"; 
+            } else if (
+                agent.search("edg/") != -1
+                || agent.search("edge/") != -1
+            ) {
+                return 'edge';
+            }
+            var reg = new RegExp(word + "([0-9]{1,})(\\.{0,}[0-9]{0,1})");
+            if (reg.exec( agent ) != null) {
+                version = RegExp.$1 + RegExp.$2;
+            }
+            return version;
         } else {
             return false;
         }
@@ -136,10 +145,11 @@ let jstool = (() => {
      * @param {*} characters 생성문자열 지정 (미입력시 대소문자+숫자)
      * @returns 랜덤문자열
      */
-    function makeRamdomString(length, characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789') {
-        let result = '';
-        for (let i=0; i < length; i++) {
-            const c = Math.floor(Math.random() * characters.length);
+    function makeRamdomString(length, characters) {
+        characters = isEmpty(characters) ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789' : characters;
+        var result = '';
+        for (var i=0; i < length; i++) {
+            var c = Math.floor(Math.random() * characters.length);
             result += characters.substring(c, c + 1);
         }
         return result;
@@ -152,7 +162,7 @@ let jstool = (() => {
      * @param {number} exp 유효시간 (초)
      */
     function setCookie(name, value, exp) {
-        let expire = new Date();
+        var expire = new Date();
         expire.setTime(expire.getTime() + exp * 1000);
         document.cookie = name + '=' + escape(value) + ';expires=' + expire.toUTCString() + ';path=/';
     }
@@ -163,7 +173,7 @@ let jstool = (() => {
      * @returns {string} 쿠키값
      */
     function getCookie(name) {
-        let value = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+        var value = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
         return value ? value[2] : null;
     }
 
@@ -189,8 +199,8 @@ let jstool = (() => {
      * @returns {string} pc/android/ios/other
      */
     function os() {
-        let userAgent = navigator.userAgent.toLowerCase();
-        let mobile = (/phone|ipad|ipod|android/i.test(userAgent));
+        var userAgent = navigator.userAgent.toLowerCase();
+        var mobile = (/phone|ipad|ipod|android/i.test(userAgent));
 
         if (mobile) {
             if (userAgent.search('android') !== -1) {
@@ -220,8 +230,9 @@ let jstool = (() => {
      * @param {string} ios_appstore_url IOS앱 앱스토어 URL
      * @param {function} pc_cbfc PC인 경우 콜백함수
      */
-    function appRun(aos_scheme, aos_host, aos_package, ios_url, ios_appstore_url, pc_cbfc = null) {
-        let os = os();
+    function appRun(aos_scheme, aos_host, aos_package, ios_url, ios_appstore_url, pc_cbfc) {
+        pc_cbfc = isEmpty(pc_cbfc) ? function() {} : pc_cbfc;
+        var os = os();
 
         if (os == 'pc') {
             if (typeof pc_cbfc == 'function') {
@@ -230,27 +241,44 @@ let jstool = (() => {
         } else {
             var cTime = (new Date()).getTime();
             if (os == 'ios') {
-                setTimeout(() => {
+                setTimeout(function () {
                     window.location = ios_appstore_url;
                 }, 1000);
                 window.location = ios_url;
             } else {
-                let userAgent = navigator.userAgent;
+                var userAgent = navigator.userAgent;
                 if (userAgent.match(/Chrome/)) {
                     location.href = 'intent://' + aos_host + '#Intent;scheme=' + aos_scheme + ';package=' + aos_package + ';end';
                 } else {
-                    setTimeout(() => {
+                    setTimeout(function () {
                         if ((new Date()).getTime() - cTime < 2000) {
                             location.href = 'https://play.google.com/store/apps/details?id=' + aos_package;
                         }
                     }, 500);
-                    let iframe = document.createElement('iframe');
+                    var iframe = document.createElement('iframe');
                     iframe.style.visibility = 'hidden';
                     iframe.src = aos_scheme + '://' + aos_host;
                     document.body.appendChild(iframe);
                     document.body.removeChild(iframe);
                 }
             }
+        }
+    }
+
+    function clipboard(string) {
+        if (isIE()) {
+            if (window.clipboardData) {
+                window.clipboardData.setData("Text", string);
+            } else {
+                console.log(2);
+            }
+        } else {
+            var t = document.createElement('textarea');
+            document.body.appendChild(t);
+            t.value = string;
+            t.select();
+            document.execCommand('Copy');
+            document.body.removeChild(t);
         }
     }
 
@@ -264,7 +292,6 @@ let jstool = (() => {
         isEmpty: isEmpty,
         isNumber: isNumber,
         isEmail: isEmail,
-        isTel: isTel,
         isIE: isIE,
         makeRamdomString: makeRamdomString,
         setCookie: setCookie,
@@ -273,5 +300,6 @@ let jstool = (() => {
         nl2br: nl2br,
         os: os,
         appRun: appRun,
+        clipboard: clipboard,
     }
 })();

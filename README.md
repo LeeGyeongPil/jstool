@@ -31,9 +31,6 @@
 ## isEmail(email)
 값이 이메일형식인지 확인
 
-## isTel(tel)
-값이 전화번호형식인지 확인
-
 ## isIE()
 브라우저가 InternetExplorer인지 확인
 
@@ -57,3 +54,6 @@ OS 정보 확인
 
 ## appRun(aos_scheme, aos_host, aos_package, ios_url, ios_appstore_url, pc_cbfc)
 앱 실행 함수
+
+## clipboard(string)
+클립보드 복사
