@@ -265,12 +265,16 @@ var jstool = (function() {
         }
     }
 
+    /**
+     * 클립보드 복사
+     * @param {string} string 복사할 문자열
+     */
     function clipboard(string) {
         if (isIE()) {
             if (window.clipboardData) {
                 window.clipboardData.setData("Text", string);
             } else {
-                console.log(2);
+                prompt('Ctrl + c', string);
             }
         } else {
             var t = document.createElement('textarea');
